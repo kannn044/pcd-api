@@ -3,8 +3,6 @@ import * as Knex from 'knex';
 export class ServiceModel {
 
   async getTable(db: any, tableName, limit = 100000000000, offset = 0) {
-    console.log(limit);
-
     var col = await db.collection(tableName)
     let rs = await col.find().limit(limit).skip(offset).toArray();
     return rs;

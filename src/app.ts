@@ -17,6 +17,8 @@ import { Router, Request, Response, NextFunction } from 'express';
 import { Jwt } from './models/jwt';
 
 import indexRoute from './routes/index';
+import tableRoute from './routes/table';
+import topicRoute from './routes/topic';
 import loginRoute from './routes/login';
 const expressMongoDb = require('express-mongo-db');
 
@@ -101,6 +103,8 @@ let checkAuth = (req: Request, res: Response, next: NextFunction) => {
 }
 
 app.use('/login', loginRoute);
+app.use('/table', tableRoute);
+app.use('/topic', topicRoute);
 // app.use('/api', checkAuth, requestRoute);
 app.use('/', indexRoute);
 
