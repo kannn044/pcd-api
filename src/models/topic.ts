@@ -13,4 +13,9 @@ export class TopicModel {
     let rs = await col.find().toArray();
     return rs;
   }
+  async getSubmenu(db: any,table) {
+    var col = await db.collection('topic')
+    let rs = await col.find({'topic':table}).toArray();
+    return rs;
+  }
 }

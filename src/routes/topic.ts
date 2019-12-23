@@ -22,6 +22,12 @@ router.get('/menu', async (req: Request, res: Response) => {
   try {
     const db = req.db;
     const table = await model.getMenu(db);
+    for (const t of table) {
+      const menu = await model.getSubmenu(db,t.code)
+      t.menu = menu;
+    }
+    console.log(table);
+    
     res.send({ ok: true, rows: table });
   } catch (error) {
     res.send({ ok: false, error: error });
