@@ -11,7 +11,18 @@ router.get('/', async (req: Request, res: Response) => {
     const db = req.db;
     const limit = +req.query.limit;
     const offset = +req.query.offset;
-    const table = await model.getTopic(db, 'topic', limit, offset);
+    const query = req.query.query
+    const table = await model.getTopic(db, 'topic', limit, offset,query);
+    res.send({ ok: true, rows: table });
+  } catch (error) {
+    res.send({ ok: false, error: error });
+  }
+});
+
+router.get('/total', async (req: Request, res: Response) => {
+  try {
+    const db = req.db;
+    const table = await model.getTotalTopic(db, 'topic');
     res.send({ ok: true, rows: table });
   } catch (error) {
     res.send({ ok: false, error: error });
@@ -23,11 +34,9 @@ router.get('/menu', async (req: Request, res: Response) => {
     const db = req.db;
     const table = await model.getMenu(db);
     for (const t of table) {
-      const menu = await model.getSubmenu(db,t.code)
+      const menu = await model.getSubmenu(db, t.code)
       t.menu = menu;
     }
-    console.log(table);
-    
     res.send({ ok: true, rows: table });
   } catch (error) {
     res.send({ ok: false, error: error });
