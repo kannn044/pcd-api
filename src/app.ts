@@ -39,18 +39,22 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, '../public')));
 
-const whitelist = ['http://hdgc.moph.go.th', 'https://hdgc.moph.go.th'];
-var corsOptions = {
-  origin: function (origin, callback) {
-    if (whitelist.indexOf(origin) !== -1) {
-      callback(null, true)
-    } else {
-      callback(new Error('Not allowed by CORS'))
-    }
-  }
-}
+// const whitelist = ['http://hdgc.moph.go.th', 'https://hdgc.moph.go.th'];
+// var corsOptions = {
+//   origin: function (origin, callback) {
+//     console.log(whitelist);
+//     console.log(whitelist.indexOf(origin));
+//     console.log(origin);
 
-// app.use(cors());
+//     if (whitelist.indexOf(origin) !== -1) {
+//       callback(null, true)
+//     } else {
+//       callback(new Error('Not allowed by CORS'))
+//     }
+//   }
+// }
+
+app.use(cors());
 
 // Mongodb middleware connection
 const connectionUrl = `mongodb://${process.env.MONGO_USER}:${process.env.MONGO_PASSWORD}@${process.env.MONGO_HOST}:${process.env.MONGO_PORT}/${process.env.MONGO_DB}`;
@@ -113,9 +117,23 @@ let checkAuth = (req: Request, res: Response, next: NextFunction) => {
     });
 }
 
-app.use('/login', cors(corsOptions),loginRoute);
-app.use('/table', cors(corsOptions), tableRoute);
-app.use('/topic', cors(corsOptions),topicRoute);
+let checkCore = (req: Request, res: Response, next: NextFunction) => {
+  const whitelist = ['hdgc.moph.go.th','localhost:3000'];
+      const origin = req.header('host');
+      if (whitelist.indexOf(origin) !== -1) {
+        next();
+        // callback(null, true)
+      } else {
+        return res.send({
+          ok: false,
+          error: 'Not allowed by CORS'
+        });
+    }
+}
+
+app.use('/login', checkCore, loginRoute);
+app.use('/table', checkCore, tableRoute);
+app.use('/topic', checkCore, topicRoute);
 // app.use('/api', checkAuth, requestRoute);
 app.use('/', indexRoute);
 
