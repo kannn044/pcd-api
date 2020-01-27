@@ -40,19 +40,21 @@ app.use(cookieParser());
 app.use(express.static(path.join(__dirname, '../public')));
 
 // const whitelist = ['http://hdgc.moph.go.th', 'https://hdgc.moph.go.th'];
-// var corsOptions = {
-//   origin: function (origin, callback) {
-//     console.log(whitelist);
-//     console.log(whitelist.indexOf(origin));
-//     console.log(origin);
-
-//     if (whitelist.indexOf(origin) !== -1) {
-//       callback(null, true)
-//     } else {
-//       callback(new Error('Not allowed by CORS'))
-//     }
+// var corsOptionsDelegate = function (req, callback) {
+//   console.log(req);
+  
+//   var corsOptions;
+//   if (whitelist.indexOf(req.header('Origin')) !== -1 || !origin) {
+//     corsOptions = { origin: true } // reflect (enable) the requested origin in the CORS response
+//   } else {
+//     corsOptions = { origin: false } // disable CORS for this request
 //   }
+//   callback(null, corsOptions) // callback expects two parameters: error and options
 // }
+// // var corsOptions = {
+// //   origin: 'http://example.com',
+// //   optionsSuccessStatus: 200 // some legacy browsers (IE11, various SmartTVs) choke on 204
+// // }
 
 app.use(cors());
 
@@ -117,23 +119,26 @@ let checkAuth = (req: Request, res: Response, next: NextFunction) => {
     });
 }
 
-let checkCore = (req: Request, res: Response, next: NextFunction) => {
-  const whitelist = ['hdgc.moph.go.th','localhost:3000'];
-      const origin = req.header('host');
-      if (whitelist.indexOf(origin) !== -1) {
-        next();
-        // callback(null, true)
-      } else {
-        return res.send({
-          ok: false,
-          error: 'Not allowed by CORS'
-        });
-    }
-}
+// let checkCore = (req: Request, res: Response, next: NextFunction) => {
+//   const whitelist = ['hdgc.moph.go.th','localhost:3000'];
+//   console.log(req.header);
+//   console.log(req.headers.origi);
+  
+//       const origin = req.header('host');
+//       if (whitelist.indexOf(origin) !== -1) {
+//         next();
+//         // callback(null, true)
+//       } else {
+//         return res.send({
+//           ok: false,
+//           error: 'Not allowed by CORS'
+//         });
+//     }
+// }
 
-app.use('/login', checkCore, loginRoute);
-app.use('/table', checkCore, tableRoute);
-app.use('/topic', checkCore, topicRoute);
+app.use('/login', loginRoute);
+app.use('/table', tableRoute);
+app.use('/topic', topicRoute);
 // app.use('/api', checkAuth, requestRoute);
 app.use('/', indexRoute);
 
