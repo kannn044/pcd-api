@@ -39,7 +39,18 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, '../public')));
 
-app.use(cors());
+const whitelist = ['http://hdgc.moph.go.th', 'https://hdgc.moph.go.th'];
+var corsOptions = {
+  origin: function (origin, callback) {
+    if (whitelist.indexOf(origin) !== -1) {
+      callback(null, true)
+    } else {
+      callback(new Error('Not allowed by CORS'))
+    }
+  }
+}
+
+// app.use(cors());
 
 // Mongodb middleware connection
 const connectionUrl = `mongodb://${process.env.MONGO_USER}:${process.env.MONGO_PASSWORD}@${process.env.MONGO_HOST}:${process.env.MONGO_PORT}/${process.env.MONGO_DB}`;
@@ -102,9 +113,9 @@ let checkAuth = (req: Request, res: Response, next: NextFunction) => {
     });
 }
 
-app.use('/login', loginRoute);
-app.use('/table', tableRoute);
-app.use('/topic', topicRoute);
+app.use('/login', cors(corsOptions),loginRoute);
+app.use('/table', cors(corsOptions), tableRoute);
+app.use('/topic', cors(corsOptions),topicRoute);
 // app.use('/api', checkAuth, requestRoute);
 app.use('/', indexRoute);
 
