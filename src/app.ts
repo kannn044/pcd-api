@@ -42,7 +42,7 @@ app.use(express.static(path.join(__dirname, '../public')));
 // const whitelist = ['http://hdgc.moph.go.th', 'https://hdgc.moph.go.th'];
 // var corsOptionsDelegate = function (req, callback) {
 //   console.log(req);
-  
+
 //   var corsOptions;
 //   if (whitelist.indexOf(req.header('Origin')) !== -1 || !origin) {
 //     corsOptions = { origin: true } // reflect (enable) the requested origin in the CORS response
@@ -66,34 +66,34 @@ app.use(expressMongoDb(connectionUrl, {
 
 
 
-// let connection: MySqlConnectionConfig = {
-//   host: process.env.DB_HOST,
-//   port: +process.env.DB_PORT,
-//   database: process.env.DB_NAME,
-//   user: process.env.DB_USER,
-//   password: process.env.DB_PASSWORD,
-//   multipleStatements: true,
-//   debug: true
-// }
+let connection: MySqlConnectionConfig = {
+  host: process.env.DB_HOST,
+  port: +process.env.DB_PORT,
+  database: process.env.DB_NAME,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  multipleStatements: true,
+  debug: true
+}
 
-// let db = Knex({
-//   client: 'mysql',
-//   connection: connection,
-//   pool: {
-//     min: 0,
-//     max: 100,
-//     afterCreate: (conn, done) => {
-//       conn.query('SET NAMES utf8', (err) => {
-//         done(err, conn);
-//       });
-//     }
-//   },
-// });
+let db = Knex({
+  client: 'mysql',
+  connection: connection,
+  pool: {
+    min: 0,
+    max: 100,
+    afterCreate: (conn, done) => {
+      conn.query('SET NAMES utf8', (err) => {
+        done(err, conn);
+      });
+    }
+  },
+});
 
-// app.use((req: Request, res: Response, next: NextFunction) => {
-//   req.db = db;
-//   next();
-// });
+app.use((req: Request, res: Response, next: NextFunction) => {
+  req.dbMysql = db;
+  next();
+});
 
 let checkAuth = (req: Request, res: Response, next: NextFunction) => {
   let token: string = null;
@@ -118,27 +118,33 @@ let checkAuth = (req: Request, res: Response, next: NextFunction) => {
       });
     });
 }
+let getToken = (req: Request, res: Response, next: NextFunction) => {
+  let token: string = null;
 
-// let checkCore = (req: Request, res: Response, next: NextFunction) => {
-//   const whitelist = ['hdgc.moph.go.th','localhost:3000'];
-//   console.log(req.header);
-//   console.log(req.headers.origi);
+  if (req.headers.authorization && req.headers.authorization.split(' ')[0] === 'Bearer') {
+    token = req.headers.authorization.split(' ')[1];
+  } else if (req.query && req.query.token) {
+    token = req.query.token;
+  } else {
+    token = req.body.token;
+  }
+  console.log(token);
   
-//       const origin = req.header('host');
-//       if (whitelist.indexOf(origin) !== -1) {
-//         next();
-//         // callback(null, true)
-//       } else {
-//         return res.send({
-//           ok: false,
-//           error: 'Not allowed by CORS'
-//         });
-//     }
-// }
+  req.token = token;
+  jwt.verify(token)
+    .then((decoded: any) => {
+      req.decoded = decoded;
+      next();
+    }, err => {
+      console.log(err);
+      next();
+    });
+}
+
 
 app.use('/login', loginRoute);
-app.use('/table', tableRoute);
-app.use('/topic', topicRoute);
+app.use('/table', getToken, tableRoute);
+app.use('/topic', getToken, topicRoute);
 // app.use('/api', checkAuth, requestRoute);
 app.use('/', indexRoute);
 
