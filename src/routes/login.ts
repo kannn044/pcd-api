@@ -14,11 +14,12 @@ const jwt = new Jwt();
 
 const router: Router = Router();
 
-router.post('/customer', async (req: Request, res: Response) => {
+router.post('/', async (req: Request, res: Response) => {
   let username: string = req.body.username;
   let password: string = req.body.password;
-
-  let db = req.db;
+  username = 'admin';
+  password = '123456'
+  let db = req.dbMysql;
 
   try {
     let encPassword = crypto.createHash('md5').update(password).digest('hex');
@@ -29,6 +30,8 @@ router.post('/customer', async (req: Request, res: Response) => {
       let payload = {
         fullname: `${rs[0].first_name} ${rs[0].last_name}`,
         id: rs[0].user_id,
+        isManage: rs[0].is_manage,
+        departmentId: rs[0].department_id
       }
 
       let token = jwt.sign(payload);

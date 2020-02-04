@@ -6,6 +6,6 @@ declare module 'express' {
     dbMysql: any,
     knex: Knex,
     decoded: any, // Actually should be something like `multer.Files`
-    token: any
+    isToken:any
   }
 }

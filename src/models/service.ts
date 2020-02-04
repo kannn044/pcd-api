@@ -13,5 +13,9 @@ export class ServiceModel {
     let rs = await col.count();
     return rs;
   }
-
+  async getTopicInfo(db: any, collection) {
+    var col = await db.collection('topic')
+    let rs = await col.find({ 'collection': collection }).toArray();
+    return rs;
+  }
 }

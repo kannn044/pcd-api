@@ -106,7 +106,7 @@ let checkAuth = (req: Request, res: Response, next: NextFunction) => {
     token = req.body.token;
   }
 
-  jwt.verify(token)
+  jwt.decoded(token)
     .then((decoded: any) => {
       req.decoded = decoded;
       next();
@@ -118,7 +118,7 @@ let checkAuth = (req: Request, res: Response, next: NextFunction) => {
       });
     });
 }
-let getToken = (req: Request, res: Response, next: NextFunction) => {
+let getToken = async (req: Request, res: Response, next: NextFunction) => {
   let token: string = null;
 
   if (req.headers.authorization && req.headers.authorization.split(' ')[0] === 'Bearer') {
@@ -128,17 +128,22 @@ let getToken = (req: Request, res: Response, next: NextFunction) => {
   } else {
     token = req.body.token;
   }
-  console.log(token);
+  const isToken = await jwt.verify(token);
+  req.isToken = isToken;
   
-  req.token = token;
-  jwt.verify(token)
-    .then((decoded: any) => {
-      req.decoded = decoded;
-      next();
-    }, err => {
-      console.log(err);
-      next();
-    });
+  if (isToken) {
+    jwt.decoded(token)
+      .then((decoded: any) => {
+        req.decoded = decoded;
+        next();
+      }, err => {
+        console.log(err);
+        next();
+      });
+  } else {
+    next();
+  }
+
 }
 
 

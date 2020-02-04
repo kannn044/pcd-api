@@ -17,7 +17,21 @@ export class Jwt {
     return token;
   }
 
-  verify(token: string) {
+  async verify(token: string) {
+    try {
+
+      const decoded = await jwt.verify(token, this.secretKey);
+      if (decoded) {
+        return true;
+      } else {
+        return false;
+      }
+    } catch (error) {
+      return false;
+    }
+  }
+
+  decoded(token: string) {
     return new Promise((resolve, reject) => {
       jwt.verify(token, this.secretKey, (err, decoded) => {
         if (err) {
