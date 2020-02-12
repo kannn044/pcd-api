@@ -29,6 +29,7 @@ router.post('/', async (req: Request, res: Response) => {
 
       let payload = {
         fullname: `${rs[0].first_name} ${rs[0].last_name}`,
+        username:rs[0].username,
         id: rs[0].user_id,
         isManage: rs[0].is_manage,
         departmentId: rs[0].department_id
