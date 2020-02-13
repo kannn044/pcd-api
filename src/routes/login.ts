@@ -17,8 +17,6 @@ const router: Router = Router();
 router.post('/', async (req: Request, res: Response) => {
   let username: string = req.body.username;
   let password: string = req.body.password;
-  username = 'admin';
-  password = '123456'
   let db = req.dbMysql;
 
   try {
