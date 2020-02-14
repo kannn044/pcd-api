@@ -73,9 +73,18 @@ router.get('/menu', async (req: Request, res: Response) => {
       const menu = await model.getSubmenu(db, t.code)
       for (let m = 0; m < menu.length; m++) {
         if (menu[m].status != 'public') {
-          if (!isToken) {
-            menu.splice(m, 1);
+          if (menu[m].status == 'login' || menu[m].status == 'private') {
+            if (!isToken) {
+              menu.splice(m, 1);
+            } else {
+              if (menu[m].status == 'private') {
+                if (menu[m].private_email.indexOf(req.decoded.username) == -1) {
+                  menu.splice(m, 1);
+                }
+              }
+            }
           }
+
         }
       }
 

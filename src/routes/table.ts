@@ -25,6 +25,12 @@ router.get('/:tableName', async (req: Request, res: Response) => {
       if (isToken) {
         get = true;
       }
+    } else if (topic[0].status == 'private') {
+      if (isToken) {
+        if (topic[0].private_email.indexOf(req.decoded.username) > -1) {
+          get = true;
+        }
+      }
     }
 
     if (get) {
@@ -61,6 +67,12 @@ router.get('/:tableName/detail', async (req: Request, res: Response) => {
       if (isToken) {
         get = true;
       }
+    } else if (table[0].status == 'private') {
+      if (isToken) {
+        if (table[0].private_email.indexOf(req.decoded.username) > -1) {
+          get = true;
+        }
+      }
     }
 
     if (get) {
@@ -86,7 +98,14 @@ router.get('/:tableName/schema', async (req: Request, res: Response) => {
       if (isToken) {
         get = true;
       }
+    } else if (topic[0].status == 'private') {
+      if (isToken) {
+        if (topic[0].private_email.indexOf(req.decoded.username) > -1) {
+          get = true;
+        }
+      }
     }
+
     if (get) {
       const schema = await serviceModel.getTable(db, topic[0].schema);
       const count = await serviceModel.getCount(db, tableName);
@@ -113,9 +132,9 @@ router.get('/:tableName/excel', async (req: Request, res: Response) => {
     const tableName = req.params.tableName;
     try {
       const rs: any = await exportModel.getInfo(dbMysql, tableName, 'EXCEL');
-      if(rs.length){
+      if (rs.length) {
         const date = moment(rs[0].create_datetime).format('YY:MM:DD');
-       const filename = `${rs[0].topic}`;
+        const filename = `${rs[0].topic}`;
         res.setHeader('Content-Type', 'application/vnd.openxmlformats');
         res.setHeader("Content-Disposition", "attachment; filename=456" + filename);
         res.sendfile(`exports/${rs[0].filename}`);
