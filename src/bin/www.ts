@@ -6,8 +6,9 @@ const port = normalizePort(+process.env.PORT || 3000);
 app.set('port', port);
 
 var server = http.createServer(app);
-
-server.listen(port, onListening);
+// const host = '0.0.0.0';
+const host = '203.157.102.233';
+server.listen(+port, host, null,onListening);
 server.on('error', onError);
 
 function normalizePort(val: any): number | string | boolean {

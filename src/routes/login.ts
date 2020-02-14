@@ -20,23 +20,27 @@ router.post('/', async (req: Request, res: Response) => {
   let db = req.dbMysql;
 
   try {
-    let encPassword = crypto.createHash('md5').update(password).digest('hex');
-    let rs: any = await loginModel.login(db, username, encPassword);
-
-    if (rs.length) {
-
-      let payload = {
-        fullname: `${rs[0].first_name} ${rs[0].last_name}`,
-        username:rs[0].username,
-        id: rs[0].user_id,
-        isManage: rs[0].is_manage,
-        departmentId: rs[0].department_id
+    if(username && password){
+      let encPassword = crypto.createHash('md5').update(password).digest('hex');
+      let rs: any = await loginModel.login(db, username, encPassword);
+  
+      if (rs.length) {
+  
+        let payload = {
+          fullname: `${rs[0].first_name} ${rs[0].last_name}`,
+          username:rs[0].username,
+          id: rs[0].user_id,
+          isManage: rs[0].is_manage,
+          departmentId: rs[0].department_id
+        }
+  
+        let token = jwt.sign(payload);
+        res.send({ ok: true, token: token, code: HttpStatus.OK });
+      } else {
+        res.send({ ok: false, error: 'Login failed!', code: HttpStatus.UNAUTHORIZED });
       }
-
-      let token = jwt.sign(payload);
-      res.send({ ok: true, token: token, code: HttpStatus.OK });
     } else {
-      res.send({ ok: false, error: 'Login failed!', code: HttpStatus.UNAUTHORIZED });
+      res.send({ ok: false, error: 'กรุณากรอก username, password' });
     }
   } catch (error) {
     res.send({ ok: false, error: error.message, code: HttpStatus.INTERNAL_SERVER_ERROR });
