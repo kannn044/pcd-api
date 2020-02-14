@@ -158,9 +158,9 @@ let checkHost = async (req: Request, res: Response, next: NextFunction) => {
 };
 
 
-app.use('/login', loginRoute, checkHost);
-app.use('/table', getToken, [tableRoute, checkHost]);
-app.use('/topic', getToken, [topicRoute, checkHost]);
+app.use('/login', checkHost,loginRoute);
+app.use('/table', [getToken,checkHost], tableRoute);
+app.use('/topic', [getToken,checkHost], topicRoute);
 // app.use('/api', checkAuth, requestRoute);
 app.use('/', indexRoute);
 
