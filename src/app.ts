@@ -130,7 +130,7 @@ let getToken = async (req: Request, res: Response, next: NextFunction) => {
   }
   const isToken = await jwt.verify(token);
   req.isToken = isToken;
-  
+
   if (isToken) {
     jwt.decoded(token)
       .then((decoded: any) => {
@@ -146,10 +146,21 @@ let getToken = async (req: Request, res: Response, next: NextFunction) => {
 
 }
 
+let checkHost = async (req: Request, res: Response, next: NextFunction) => {
+  if (req.headers.host == 'hdgc.moph.go.th') {
+    next();
+  } else {
+    return res.send({
+      ok: false,
+      error: HttpStatus.getStatusText(HttpStatus.UNAUTHORIZED),
+    });
+  }
+};
 
-app.use('/login', loginRoute);
-app.use('/table', getToken, tableRoute);
-app.use('/topic', getToken, topicRoute);
+
+app.use('/login', loginRoute, checkHost);
+app.use('/table', getToken, [tableRoute, checkHost]);
+app.use('/topic', getToken, [topicRoute, checkHost]);
 // app.use('/api', checkAuth, requestRoute);
 app.use('/', indexRoute);
 
