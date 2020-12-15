@@ -42,7 +42,7 @@ const url = `mongodb://${process.env.MONGO_USER}:${process.env.MONGO_PASSWORD}@$
 
 app.use('/', indexRoute);
 
-cron.schedule('*/15 * * * *', async () => {
+cron.schedule('*/1 * * * *', async () => {
   const rs: any = await serviceModel.getStation();
   let data: any = [];
   for (const v of rs.stations) {
@@ -57,7 +57,7 @@ cron.schedule('*/15 * * * *', async () => {
       "type": "Point",
       "coordinates": [+v.long, +v.lat]
     }
-    obj.lastUpdate = v.lastUpdate
+    obj.LastUpdate = v.LastUpdate
     obj.d_update = moment().format('YYYY-MM-DD HH:mm:ss');
     data.push(obj);
   }
