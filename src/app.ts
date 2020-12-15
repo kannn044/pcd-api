@@ -12,158 +12,65 @@ import * as express from 'express';
 import * as cors from 'cors';
 
 import Knex = require('knex');
-import { MySqlConnectionConfig } from 'knex';
 import { Router, Request, Response, NextFunction } from 'express';
-import { Jwt } from './models/jwt';
-
+import { ServiceModel } from './models/service';
 import indexRoute from './routes/index';
-import tableRoute from './routes/table';
-import topicRoute from './routes/topic';
-import loginRoute from './routes/login';
-const expressMongoDb = require('express-mongo-db');
+import moment = require('moment');
+const MongoClient = require('mongodb').MongoClient;
+var cron = require('node-cron');
+const router: Router = Router();
 
+const serviceModel = new ServiceModel;
 // Assign router to the express.Router() instance
 const app: express.Application = express();
-const jwt = new Jwt();
 
 //view engine setup
 app.set('views', path.join(__dirname, '../views'));
 app.engine('.ejs', ejs.renderFile);
 app.set('view engine', 'ejs');
 
-//uncomment after placing your favicon in /public
-//app.use(favicon(path.join(__dirname,'../public','favicon.ico')));
 app.use(logger('dev'));
 app.use(bodyParser.json({ limit: '5mb' }));
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, '../public')));
 
-// const whitelist = ['http://hdgc.moph.go.th', 'https://hdgc.moph.go.th'];
-// var corsOptionsDelegate = function (req, callback) {
-//   console.log(req);
-
-//   var corsOptions;
-//   if (whitelist.indexOf(req.header('Origin')) !== -1 || !origin) {
-//     corsOptions = { origin: true } // reflect (enable) the requested origin in the CORS response
-//   } else {
-//     corsOptions = { origin: false } // disable CORS for this request
-//   }
-//   callback(null, corsOptions) // callback expects two parameters: error and options
-// }
-// // var corsOptions = {
-// //   origin: 'http://example.com',
-// //   optionsSuccessStatus: 200 // some legacy browsers (IE11, various SmartTVs) choke on 204
-// // }
-
 app.use(cors());
 
 // Mongodb middleware connection
-const connectionUrl = `mongodb://${process.env.MONGO_USER}:${process.env.MONGO_PASSWORD}@${process.env.MONGO_HOST}:${process.env.MONGO_PORT}/${process.env.MONGO_DB}`;
-app.use(expressMongoDb(connectionUrl, {
-  property: 'db'
-}));
+const url = `mongodb://${process.env.MONGO_USER}:${process.env.MONGO_PASSWORD}@${process.env.MONGO_HOST}:${process.env.MONGO_PORT}/${process.env.MONGO_NAME}`;
 
-
-
-let connection: MySqlConnectionConfig = {
-  host: process.env.DB_HOST,
-  port: +process.env.DB_PORT,
-  database: process.env.DB_NAME,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  multipleStatements: true,
-  debug: false
-}
-
-let db = Knex({
-  client: 'mysql',
-  connection: connection,
-  pool: {
-    min: 0,
-    max: 100,
-    afterCreate: (conn, done) => {
-      conn.query('SET NAMES utf8', (err) => {
-        done(err, conn);
-      });
-    }
-  },
-});
-
-app.use((req: Request, res: Response, next: NextFunction) => {
-  req.dbMysql = db;
-  next();
-});
-
-let checkAuth = (req: Request, res: Response, next: NextFunction) => {
-  let token: string = null;
-
-  if (req.headers.authorization && req.headers.authorization.split(' ')[0] === 'Bearer') {
-    token = req.headers.authorization.split(' ')[1];
-  } else if (req.query && req.query.token) {
-    token = req.query.token;
-  } else {
-    token = req.body.token;
-  }
-
-  jwt.decoded(token)
-    .then((decoded: any) => {
-      req.decoded = decoded;
-      next();
-    }, err => {
-      return res.send({
-        ok: false,
-        error: HttpStatus.getStatusText(HttpStatus.UNAUTHORIZED),
-        code: HttpStatus.UNAUTHORIZED
-      });
-    });
-}
-let getToken = async (req: Request, res: Response, next: NextFunction) => {
-  let token: string = null;
-
-  if (req.headers.authorization && req.headers.authorization.split(' ')[0] === 'Bearer') {
-    token = req.headers.authorization.split(' ')[1];
-  } else if (req.query && req.query.token) {
-    token = req.query.token;
-  } else {
-    token = req.body.token;
-  }
-  const isToken = await jwt.verify(token);
-  req.isToken = isToken;
-
-  if (isToken) {
-    jwt.decoded(token)
-      .then((decoded: any) => {
-        req.decoded = decoded;
-        next();
-      }, err => {
-        console.log(err);
-        next();
-      });
-  } else {
-    next();
-  }
-
-}
-
-let checkHost = async (req: Request, res: Response, next: NextFunction) => {
-  if (req.headers.host == 'hdgc.moph.go.th') {
-    next();
-  } else {
-    return res.send({
-      ok: false,
-      error: HttpStatus.getStatusText(HttpStatus.UNAUTHORIZED),
-    });
-  }
-};
-
-
-app.use('/login',loginRoute);
-app.use('/table',getToken, tableRoute);
-app.use('/topic',getToken, topicRoute);
-// app.use('/api', checkAuth, requestRoute);
 app.use('/', indexRoute);
 
+cron.schedule('*/15 * * * *', async () => {
+  const rs: any = await serviceModel.getStation();
+  let data: any = [];
+  for (const v of rs.stations) {
+    const obj: any = {};
+    obj.stationID = v.stationID;
+    obj.nameTH = v.nameTH;
+    obj.nameEN = v.nameEN;
+    obj.areaTH = v.areaTH;
+    obj.areaEN = v.areaEN;
+    obj.stationType = v.stationType;
+    obj.locations = {
+      "type": "Point",
+      "coordinates": [+v.long, +v.lat]
+    }
+    obj.lastUpdate = v.lastUpdate
+    obj.d_update = moment().format('YYYY-MM-DD HH:mm:ss');
+    data.push(obj);
+  }
+
+  MongoClient.connect(url).then(async (db) => {
+    if (rs.stations.length > 0) {
+      await serviceModel.remove(db);
+    }
+    await serviceModel.insert(db, data);
+    await serviceModel.insertHistory(db, data);
+    db.close()
+  });
+});
 //error handlers
 
 if (process.env.NODE_ENV === 'development') {
