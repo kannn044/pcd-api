@@ -5,7 +5,7 @@ const model = new ServiceModel;
 const router: Router = Router();
 
 router.get('/', async (req: Request, res: Response) => {
-    res.send({ ok: true, message: 'Welcome to PCD Api' });
+  res.send({ ok: true, message: 'Welcome to PCD Api' });
 });
 
 router.get('/closet-station', async (req: Request, res: Response) => {
@@ -13,6 +13,38 @@ router.get('/closet-station', async (req: Request, res: Response) => {
   const lat = req.query.lat;
   try {
     const rs = await model.getClosetStation(lng, lat);
+    const pm25Value = rs[0].LastUpdate.PM25.value;
+    if (pm25Value <= 25) {
+      rs[0].LastUpdate.PM25.color = '#b6dde8';
+      rs[0].LastUpdate.PM25.level = 'ดีมาก';
+      rs[0].LastUpdate.PM25.volume = '(0 - 25 ไมโครกรัม/ลูกบาศก์เมตร)';
+      rs[0].LastUpdate.PM25.normalPeople = ['ทํากิจกรรมได้ตามปกติ'];
+      rs[0].LastUpdate.PM25.sensitivePeople = ['ทํากิจกรรมได้ตามปกติ'];
+    } else if (pm25Value <= 50) {
+      rs[0].LastUpdate.PM25.color = '#92d150';
+      rs[0].LastUpdate.PM25.level = 'ดี';
+      rs[0].LastUpdate.PM25.volume = '(26 - 37 ไมโครกรัม/ลูกบาศก์เมตร)';
+      rs[0].LastUpdate.PM25.normalPeople = ['ทํากิจกรรมได้ตามปกติ'];
+      rs[0].LastUpdate.PM25.sensitivePeople = ['1.เลี่ยงการทํากิจกรรมหรือออกกําลังกายกลางแจ้ง', '2.เฝ้าระวังอาการ หากมีอาการผิดปกติให้รีบพบแพทย์ทันที'];
+    } else if (pm25Value <= 100) {
+      rs[0].LastUpdate.PM25.color = '#ffff02';
+      rs[0].LastUpdate.PM25.level = 'ปานกลาง';
+      rs[0].LastUpdate.PM25.volume = '(38 - 50 ไมโครกรัม/ลูกบาศก์เมตร)';
+      rs[0].LastUpdate.PM25.normalPeople = [];
+      rs[0].LastUpdate.PM25.sensitivePeople = [];
+    } else if (pm25Value <= 200) {
+      rs[0].LastUpdate.PM25.color = '#ffc001';
+      rs[0].LastUpdate.PM25.level = 'เริ่มมีผลกระทบต่อสุขภาพ';
+      rs[0].LastUpdate.PM25.volume = '( 51 - 90 ไมโครกรัม/ลูกบาศก์เมตร)';
+      rs[0].LastUpdate.PM25.normalPeople = [];
+      rs[0].LastUpdate.PM25.sensitivePeople = [];
+    } else if (pm25Value >= 201) {
+      rs[0].LastUpdate.PM25.color = '#ff0000';
+      rs[0].LastUpdate.PM25.level = 'มีผลกระทบต่อสุขภาพ';
+      rs[0].LastUpdate.PM25.volume = '(91 ไมโครกรมั/ลูกบาศก์เมตร ขึ้นไป)';
+      rs[0].LastUpdate.PM25.normalPeople = [];
+      rs[0].LastUpdate.PM25.sensitivePeople = [];
+    }
     res.send({ ok: true, rows: rs });
   } catch (error) {
     res.send({ ok: false, message: error })
